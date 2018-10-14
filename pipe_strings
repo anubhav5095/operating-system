@@ -1,0 +1,64 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+int main()
+{
+    int fd1[2];
+    int fd2[2];
+    char inputparent[100];
+    char inputchild[100];
+    pid_t p;
+    
+    if(pipe(fd1)==-1)
+    {
+        fprintf(stderr, "Pipe failed");
+        return 1;
+    }
+    if(pipe(fd2)==-1)
+    {
+        fprintf(stderr, "Pipe failed");
+        return 1;
+    }
+    printf("Input from parent\n");
+    scanf("%s",&inputparent);
+    p=fork();
+    
+    if(p<0)
+    {
+        fprintf(stderr,"Fork failed");
+        return 1;
+    }
+    else if(p==0)               //parent process
+    {
+        char takechild[100];
+        close(fd1[0]);
+        write(fd1[1], inputparent, strlen(inputparent)+1);
+        close(fd1[1]);
+        //wait for child process
+        wait(NULL);
+        close(fd2[1]);
+        read(fd2[0], takechild,100);
+        printf("%s-took from child\n",takechild);
+        close(fd2[0]);
+    }
+    
+    else
+    {
+        char taking[100];
+        close(fd1[1]);
+        read(fd1[0],taking, 100);
+        printf("%s -took from parent\n",taking);
+        close(fd1[0]);
+        close(fd2[0]);
+        printf("Input string from child\n");
+        scanf("%s",inputchild);
+        write(fd2[1],inputchild, strlen(inputchild)+1);
+        close(fd2[1]);
+        exit(0);
+        
+    }
+    
+}
